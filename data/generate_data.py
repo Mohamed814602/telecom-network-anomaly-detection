@@ -33,57 +33,68 @@ FREQ = "15min"
 # ── Baseline KPI generators ────────────────────────────────────────────────
 
 def base_latency(n, rng):
-    """Normal latency: 20–60 ms with daily cycle (higher at peak hours)."""
+    """Normal latency: 20–60 ms with daily cycle + realistic noise bursts."""
     t = np.arange(n)
-    daily = 10 * np.sin(2 * np.pi * t / (96))          # 96 slots = 1 day
-    noise = rng.normal(0, 3, n)
-    return np.clip(35 + daily + noise, 5, 200)
+    daily = 10 * np.sin(2 * np.pi * t / 96)
+    # Higher base noise + occasional non-anomaly spikes (natural jitter)
+    noise = rng.normal(0, 8, n)
+    jitter = rng.exponential(5, n) * (rng.random(n) < 0.05)  # 5% random spikes
+    return np.clip(35 + daily + noise + jitter, 5, 200)
 
 def base_throughput(n, rng):
-    """Throughput: 50–150 Mbps, inversely correlated with load."""
+    """Throughput: 50–150 Mbps with higher variance and random dips."""
     t = np.arange(n)
     daily = -20 * np.sin(2 * np.pi * t / 96)
-    noise = rng.normal(0, 5, n)
-    return np.clip(100 + daily + noise, 10, 300)
+    noise = rng.normal(0, 12, n)
+    # Occasional legitimate short dips (handover, scheduling)
+    dips = rng.uniform(0.6, 0.9, n) * (rng.random(n) < 0.04)
+    base = np.clip(100 + daily + noise, 10, 300)
+    return np.where(dips > 0, base * dips, base)
 
 def base_packet_loss(n, rng):
-    """Packet loss: mostly near 0, occasional small spikes."""
-    base = rng.exponential(0.3, n)
-    return np.clip(base, 0, 2)
+    """Packet loss: noisy baseline with frequent small spikes."""
+    base = rng.exponential(0.8, n)       # higher mean noise
+    spikes = rng.exponential(1.5, n) * (rng.random(n) < 0.08)  # 8% random spikes
+    return np.clip(base + spikes, 0, 5)  # allow up to 5% normal loss
 
 def base_sinr(n, rng):
-    """SINR: 5–25 dB, slight daily variation."""
+    """SINR: more variation to simulate real interference environment."""
     t = np.arange(n)
     daily = 3 * np.sin(2 * np.pi * t / 96 + np.pi)
-    noise = rng.normal(0, 1.5, n)
-    return np.clip(15 + daily + noise, -5, 30)
+    noise = rng.normal(0, 3.5, n)        # wider spread
+    interference = -rng.exponential(2, n) * (rng.random(n) < 0.06)
+    return np.clip(15 + daily + noise + interference, -5, 30)
 
 def base_users(n, rng):
-    """Connected users: 10–200, strong daily pattern."""
+    """Connected users: noisy daily pattern with random surges."""
     t = np.arange(n)
     daily = 80 * np.clip(np.sin(2 * np.pi * (t / 96 - 0.2)), 0, 1)
-    noise = rng.normal(0, 5, n)
-    return np.clip(20 + daily + noise, 1, 300).astype(int)
+    noise = rng.normal(0, 12, n)
+    surges = rng.uniform(20, 60, n) * (rng.random(n) < 0.03)
+    return np.clip(20 + daily + noise + surges, 1, 300).astype(int)
 
 
 # ── Anomaly injectors ──────────────────────────────────────────────────────
 
 def inject_latency_spike(latency, start, duration=8):
-    """Inject a sharp latency spike (congestion event)."""
+    """Inject a latency spike — range reduced to overlap with noise floor."""
     latency = latency.copy()
-    latency[start:start+duration] += rng.uniform(80, 200, duration)
+    # Softer range: some spikes will be borderline vs natural jitter
+    latency[start:start+duration] += rng.uniform(30, 120, duration)
     return latency
 
 def inject_throughput_drop(throughput, start, duration=24):
-    """Inject sustained throughput degradation (hardware fault)."""
+    """Inject throughput degradation — less extreme to create ambiguous cases."""
     throughput = throughput.copy()
-    throughput[start:start+duration] *= rng.uniform(0.1, 0.3)
+    # 0.25–0.6x instead of 0.1–0.3x: some drops look like natural dips
+    throughput[start:start+duration] *= rng.uniform(0.25, 0.6)
     return throughput
 
 def inject_packet_loss_burst(packet_loss, start, duration=6):
-    """Inject bursty packet loss (interference)."""
+    """Inject packet loss burst — softer range overlaps with noisy baseline."""
     packet_loss = packet_loss.copy()
-    packet_loss[start:start+duration] += rng.uniform(5, 15, duration)
+    # 3–10% instead of 5–15%: borderline cases force the model to work harder
+    packet_loss[start:start+duration] += rng.uniform(3, 10, duration)
     return packet_loss
 
 

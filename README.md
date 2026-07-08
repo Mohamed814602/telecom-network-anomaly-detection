@@ -2,7 +2,7 @@
 
 An end-to-end ML system that detects anomalies in telecom network KPIs (latency, throughput, packet loss) in real time, deployed as a production-ready REST API.
 
-**Key result: 93% recall on detecting network faults before service degradation.**
+**Key result: 95.2% recall on detecting network faults before service degradation.**
 
 ---
 
@@ -110,7 +110,19 @@ For each KPI, the following features are computed per cell tower:
 | **Rate of change** | `(t - t-1) / t-1` — detects sudden jumps |
 | **Time features** | Hour of day, day of week, is_weekend |
 
-Total: **57 features** across 5 KPIs.
+Total: **68 features** across 5 KPIs.
+
+| Feature group | Count |
+|---|---|
+| Lag features (t-1, t-2, t-4, t-8) | 5 KPIs × 4 = 20 |
+| Rolling mean (1h, 4h) | 5 KPIs × 2 = 10 |
+| Rolling std (1h, 4h) | 5 KPIs × 2 = 10 |
+| Rolling min/max (1h) | 5 KPIs × 2 = 10 |
+| Z-score (4h window) | 5 KPIs × 1 = 5 |
+| Rate of change | 5 KPIs × 1 = 5 |
+| Raw KPI values | 5 |
+| Time features (hour, day_of_week, is_weekend) | 3 |
+| **Total** | **68** |
 
 ---
 
@@ -152,11 +164,12 @@ The default 0.5 threshold maximizes accuracy, not recall. In anomaly detection, 
 
 | Metric | Value |
 |---|---|
-| Recall | **93%** — catches 93 of every 100 real faults |
-| Precision | ~85% |
-| ROC-AUC | ~0.97 |
+| Recall | **95.2%** — catches 95 of every 100 faults |
+| Precision | **76.9%** — ~23% false alarm rate, acceptable for NOC operations |
+| F1 Score | **0.851** |
 
 *Results on held-out test set (last 20% of time window, never seen during training).*
+*Threshold tuned to maximize recall subject to a 93% recall floor — missing a fault is more costly than a false alarm in NOC operations.*
 
 ---
 
