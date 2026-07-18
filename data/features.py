@@ -32,7 +32,7 @@ SHORT_WINDOW = 4                    # 1 hour
 LONG_WINDOW  = 16                   # 4 hours
 
 
-def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
+def engineer_features(df: pd.DataFrame, verbose: bool = True) -> pd.DataFrame:
     """
     Input : raw KPI DataFrame (columns: timestamp, cell_id, kpis..., anomaly)
     Output: feature-engineered DataFrame, NaN rows dropped
@@ -84,8 +84,9 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     n_before = len(result)
     result = result.dropna().reset_index(drop=True)
     n_dropped = n_before - len(result)
-    print(f"Feature engineering complete. Dropped {n_dropped} NaN rows, "
-          f"{len(result):,} rows remaining.")
+    if verbose:
+        print(f"Feature engineering complete. Dropped {n_dropped} NaN rows, "
+              f"{len(result):,} rows remaining.")
 
     return result
 
