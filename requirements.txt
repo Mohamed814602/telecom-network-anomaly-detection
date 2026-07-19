@@ -1,6 +1,6 @@
 numpy>=1.26
 pandas>=2.1
-scikit-learn>=1.4
+scikit-learn==1.8.0
 xgboost>=2.0
 fastapi>=0.110
 uvicorn>=0.29
