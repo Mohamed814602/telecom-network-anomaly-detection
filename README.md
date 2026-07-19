@@ -96,6 +96,29 @@ Open: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
 
+## Running with Docker
+
+Build and run the API in a container instead of a local Python environment:
+
+```bash
+docker compose up --build
+```
+
+The API is then available at [http://localhost:8000](http://localhost:8000) — same endpoints as above.
+
+Or with plain Docker, no compose:
+
+```bash
+docker build -t telecom-anomaly-detection .
+docker run -p 8000:8000 telecom-anomaly-detection
+```
+
+Notes:
+- Runs as a non-root user, with a container `HEALTHCHECK` against `/health`.
+- The trained model artifacts (`models/model.json`, `scaler.pkl`, `metadata.json`) are baked into the image at build time — rebuild the image after retraining.
+
+---
+
 ## Feature Engineering
 
 For each KPI, the following features are computed per cell tower:
@@ -175,4 +198,4 @@ The default 0.5 threshold maximizes accuracy, not recall. In anomaly detection, 
 
 ## Tech Stack
 
-`Python` · `XGBoost` · `scikit-learn` · `Pandas` · `NumPy` · `FastAPI` · `Pydantic` · `Uvicorn`
+`Python` · `XGBoost` · `scikit-learn` · `Pandas` · `NumPy` · `FastAPI` · `Pydantic` · `Uvicorn` · `Docker`

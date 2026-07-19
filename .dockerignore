@@ -1,0 +1,16 @@
+.git
+.gitignore
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+data/raw_kpis.csv
+data/features.csv
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+.DS_Store
+README.md
+docker-compose.yml
