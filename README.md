@@ -74,6 +74,9 @@ uvicorn api.main:app --reload --port 8000
 ```
 
 ### 6. Make a prediction
+
+A brand-new cell has no history yet, so the **first call for any `cell_id` intentionally returns 425 Too Early** — the API won't guess with a mostly-empty feature vector:
+
 ```bash
 curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
@@ -83,13 +86,11 @@ curl -X POST http://localhost:8000/predict \
     "throughput_mbps": 12.3,
     "packet_loss_pct": 8.7,
     "sinr_db": 4.2,
-    "connected_users": 87,
-    "hour": 14,
-    "day_of_week": 2,
-    "is_weekend": 0,
-    "features": {}
+    "connected_users": 87
   }'
 ```
+
+Send ~20 more readings for the same `cell_id`, in chronological order, and the API starts returning real predictions once it has enough history to compute the time-series features (see [How `/predict` builds its feature vector](#api-endpoints) further down). If you already have pre-computed features on hand, pass them directly via the `features` field instead and skip the warm-up.
 
 ### 7. View interactive API docs
 Open: [http://localhost:8000/docs](http://localhost:8000/docs)
